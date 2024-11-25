@@ -48,8 +48,8 @@ def test_get_captcha_and_login(api_url):
     # Step 4: Perform login using username, password, captcha_key, and captcha_response
     login_url = f"{api_url}/user/login/"
     payload = {
-        'username': 'admin',  # Replace with actual username
-        'password': 'adminadmin',  # Replace with actual password
+        'username': 'admin',  
+        'password': 'adminadmin', 
         'captcha_key': captcha_key,
         'captcha_response': captcha_response
     }
