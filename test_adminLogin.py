@@ -47,6 +47,9 @@ def test_get_captcha_and_login(api_url):
     captcha_key = response_data.get('data', {}).get('captcha_key')
     assert captcha_key is not None, "Captcha key is missing in the response"
 
+    # Print the captcha_key for debugging
+    print('Captcha_Key is:', captcha_key)
+
     # Step 2: Use the captcha_key to request the captcha image
     image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
     assert image_response.status_code == 200, "Failed to retrieve captcha image"
@@ -60,15 +63,20 @@ def test_get_captcha_and_login(api_url):
 
     # Step 4: Use Tesseract to extract text with character whitelist to avoid unwanted characters like hyphens
     custom_config = r'--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Use Tesseract to extract text
+    raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Raw OCR result
 
-    # Check if the captcha_response is empty
-    if not captcha_response:
+    # Print raw captcha response for debugging
+    print('Raw Captcha Response is :', raw_captcha_response)
+
+    # Check if the raw_captcha_response is empty
+    if not raw_captcha_response:
         raise ValueError("Tesseract returned an empty response. Please check the captcha image and Tesseract installation.")
     
-    # Print for debugging
-    print('Captcha Key:', captcha_key)
-    print('Captcha Response:', captcha_response)
+    # Convert to lowercase for processing if needed
+    captcha_response = raw_captcha_response.lower()
+
+    # Print the processed captcha response
+    print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
 
     ####################################################################
     # Step 5: Perform login using username, password, captcha_key, and captcha_response
