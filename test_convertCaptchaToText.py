@@ -18,15 +18,27 @@ def pre_process_image(image_data):
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
+    # Save the grayscale image for debugging
+    cv2.imwrite("gray_image.png", gray)
+    
     # Remove noise using GaussianBlur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # Save the blurred image for debugging
+    cv2.imwrite("blurred_image.png", blurred)
     
     # Apply binary thresholding (Otsu's method)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     
+    # Save the thresholded image for debugging
+    cv2.imwrite("thresholded_image.png", thresh)
+    
     # Use morphological transformations to clean the text
     kernel = np.ones((3, 3), np.uint8)
     morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    
+    # Save the final pre-processed image for debugging
+    cv2.imwrite("processed_captcha.png", morphed)
     
     return morphed
 
