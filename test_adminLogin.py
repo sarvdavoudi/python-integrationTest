@@ -7,92 +7,100 @@ from io import BytesIO
 import cv2
 import numpy as np
 
+
 @pytest.fixture(scope='module')
 def api_url():
     return os.getenv("API_URL")
 
+
 def pre_process_image(image_data):
+    # Create a directory for saving debug images
+    debug_dir = "images_login_captcha"
+    if not os.path.exists(debug_dir):
+        try:
+            os.makedirs(debug_dir)
+        except Exception as e:
+            raise OSError(f"Failed to create directory {debug_dir}: {e}")
+    assert os.path.exists(debug_dir), f"Directory {debug_dir} does not exist."
+
     # Convert the image to a NumPy array
     image = np.array(image_data)
-    
-    # Convert the image to grayscale
+
+    # Step 1: Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
-    # Remove noise using GaussianBlur
+    gray_image_path = os.path.join(debug_dir, "gray_image.png")
+    cv2.imwrite(gray_image_path, gray)
+    print(f"Gray image saved at: {gray_image_path}")
+
+    # Step 2: Remove noise using GaussianBlur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    
-    # Apply binary thresholding (Otsu's method)
+    blurred_image_path = os.path.join(debug_dir, "blurred_image.png")
+    cv2.imwrite(blurred_image_path, blurred)
+    print(f"Blurred image saved at: {blurred_image_path}")
+
+    # Step 3: Apply binary thresholding (Otsu's method)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Use morphological transformations to clean the text
+    thresholded_image_path = os.path.join(debug_dir, "thresholded_image.png")
+    cv2.imwrite(thresholded_image_path, thresh)
+    print(f"Thresholded image saved at: {thresholded_image_path}")
+
+    # Step 4: Use morphological transformations to clean the text
     kernel = np.ones((3, 3), np.uint8)
     morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    
+    processed_image_path = os.path.join(debug_dir, "processed_captcha.png")
+    cv2.imwrite(processed_image_path, morphed)
+    print(f"Processed captcha image saved at: {processed_image_path}")
+
     return morphed
 
+
 def test_get_captcha_and_login(api_url):
-    # Specify the path to the Tesseract executable
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update the path if necessary
+    # Specify the path to Tesseract executable
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update path if necessary
 
     # Step 1: Get the captcha_key from the /user/captcha/ endpoint
     response = requests.get(f"{api_url}/user/captcha/")
-    
-    # Ensure the response status is 200
     assert response.status_code == 200, "Failed to retrieve captcha"
-    
+
     # Parse the JSON response
     response_data = response.json()
-    
-    # Extract the captcha_key
     captcha_key = response_data.get('data', {}).get('captcha_key')
     assert captcha_key is not None, "Captcha key is missing in the response"
-
-    # Print the captcha_key for debugging
     print('Captcha_Key is:', captcha_key)
 
     # Step 2: Use the captcha_key to request the captcha image
     image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
     assert image_response.status_code == 200, "Failed to retrieve captcha image"
-    
+
     # Step 3: Pre-process the image to improve OCR accuracy
     image = Image.open(BytesIO(image_response.content))
     pre_processed_image = pre_process_image(image)
-    
+
     # Convert pre-processed image back to a PIL image for Tesseract
     processed_image = Image.fromarray(pre_processed_image)
 
-    # Step 4: Use Tesseract to extract text with character whitelist to avoid unwanted characters like hyphens
-    custom_config = r'--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Raw OCR result
+    # Step 4: Use Tesseract to extract text with character whitelist to avoid unwanted characters
+    custom_config = r'--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()
+    print('Raw Captcha Response is:', raw_captcha_response)
 
-    # Print raw captcha response for debugging
-    print('Raw Captcha Response is :', raw_captcha_response)
-
-    # Check if the raw_captcha_response is empty
     if not raw_captcha_response:
-        raise ValueError("Tesseract returned an empty response. Please check the captcha image and Tesseract installation.")
-    
+        raise ValueError("Tesseract returned an empty response. Check the captcha image and Tesseract installation.")
+
     # Convert to lowercase for processing if needed
     captcha_response = raw_captcha_response.lower()
-
-    # Print the processed captcha response
     print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
 
     ####################################################################
     # Step 5: Perform login using username, password, captcha_key, and captcha_response
     login_url = f"{api_url}/user/login/"
     payload = {
-        'username': 'admin',  
-        'password': 'adminadmin', 
+        'username': 'admin',
+        'password': 'adminadmin',
         'captcha_key': captcha_key,
         'captcha_response': captcha_response
     }
 
-    # Send the POST request to the login endpoint
     login_response = requests.post(login_url, json=payload)
-
-    # Check the response status for login
     assert login_response.status_code == 200, "Login failed. Check username, password, and captcha."
-
-    # Optionally, print the login response for debugging
     print('Login Response:', login_response.json())

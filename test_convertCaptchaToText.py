@@ -12,33 +12,37 @@ def api_url():
     return os.getenv("API_URL")
 
 def pre_process_image(image_data):
-    # Convert the image to a NumPy array
+    # Create directories for saving images
+    debug_dir = "debug_images"
+    processed_dir = "images_captcha_test"
+    
+    # Create directories if they don't exist
+    os.makedirs(debug_dir, exist_ok=True)
+    os.makedirs(processed_dir, exist_ok=True)
+    
+    # Save the main image received from the server in its original PIL format
+    main_image_path = os.path.join(debug_dir, "received_captcha.png")
+    image_data.save(main_image_path)  # Save the original image as the main image
+    
+    # Convert the image to a NumPy array for processing
     image = np.array(image_data)
     
     # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
-    # Save the grayscale image for debugging
-    cv2.imwrite("gray_image.png", gray)
-    
     # Remove noise using GaussianBlur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
-    # Save the blurred image for debugging
-    cv2.imwrite("blurred_image.png", blurred)
-    
     # Apply binary thresholding (Otsu's method)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    
-    # Save the thresholded image for debugging
-    cv2.imwrite("thresholded_image.png", thresh)
     
     # Use morphological transformations to clean the text
     kernel = np.ones((3, 3), np.uint8)
     morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
     
-    # Save the final pre-processed image for debugging
-    cv2.imwrite("processed_captcha.png", morphed)
+    # Save the final processed image
+    processed_image_path = os.path.join(processed_dir, "final_processed_captcha.png")
+    cv2.imwrite(processed_image_path, morphed)
     
     return morphed
 
