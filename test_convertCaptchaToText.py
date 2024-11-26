@@ -32,7 +32,7 @@ def test_get_captcha_and_login(api_url):
     
     # Step 3: Convert the image response to text using Tesseract
     image = Image.open(BytesIO(image_response.content))
-    captcha_response = pytesseract.image_to_string(image).strip()  # Use Tesseract to extract text
+    captcha_response = pytesseract.image_to_string(image, config='--psm 6').strip()  # Use Tesseract to extract text
 
     # Check if the captcha_response is empty
     if not captcha_response:
