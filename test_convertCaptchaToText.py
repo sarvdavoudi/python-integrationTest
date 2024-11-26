@@ -4,10 +4,31 @@ import os
 from PIL import Image
 import pytesseract
 from io import BytesIO
+import cv2
+import numpy as np
 
 @pytest.fixture(scope='module')
 def api_url():
     return os.getenv("API_URL")
+
+def pre_process_image(image_data):
+    # Convert the image to a NumPy array
+    image = np.array(image_data)
+    
+    # Convert the image to grayscale
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    
+    # Remove noise using GaussianBlur
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    
+    # Apply binary thresholding (Otsu's method)
+    _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # Use morphological transformations to clean the text
+    kernel = np.ones((3, 3), np.uint8)
+    morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
+    
+    return morphed
 
 def test_get_captcha_and_login(api_url):
     # Specify the path to the Tesseract executable
@@ -30,14 +51,23 @@ def test_get_captcha_and_login(api_url):
     image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
     assert image_response.status_code == 200, "Failed to retrieve captcha image"
     
-    # Step 3: Convert the image response to text using Tesseract
+    # Step 3: Pre-process the image to improve OCR accuracy
     image = Image.open(BytesIO(image_response.content))
-    captcha_response = pytesseract.image_to_string(image, config='--psm 6').strip()  # Use Tesseract to extract text
+    pre_processed_image = pre_process_image(image)
+    
+    # Convert pre-processed image back to a PIL image for Tesseract
+    processed_image = Image.fromarray(pre_processed_image)
+
+    # Use Tesseract to extract text with character whitelist to avoid unwanted characters like hyphens
+    custom_config = r'--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Use Tesseract to extract text
 
     # Check if the captcha_response is empty
     if not captcha_response:
         raise ValueError("Tesseract returned an empty response. Please check the captcha image and Tesseract installation.")
-
+    
     # Print for debugging
     print('Captcha Key:', captcha_key)
     print('Captcha Response:', captcha_response)
+
+    # You can add additional checks to verify the correctness of the captcha_response
