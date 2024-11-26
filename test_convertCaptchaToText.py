@@ -15,7 +15,7 @@ def pre_process_image(image_data):
     # Convert the image to a NumPy array
     image = np.array(image_data)
     
-    # Convert the image to grayscale
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
     # Remove noise using GaussianBlur
@@ -31,12 +31,12 @@ def pre_process_image(image_data):
     return morphed
 
 def test_get_captcha_and_login(api_url):
-    # Specify the path to the Tesseract executable
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update the path if necessary
+    # Specify the path to Tesseract executable
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update path if necessary
 
     # Step 1: Get the captcha_key from the /user/captcha/ endpoint
     response = requests.get(f"{api_url}/user/captcha/")
-    
+
     # Ensure the response status is 200
     assert response.status_code == 200, "Failed to retrieve captcha"
     
@@ -46,6 +46,9 @@ def test_get_captcha_and_login(api_url):
     # Extract the captcha_key
     captcha_key = response_data.get('data', {}).get('captcha_key')
     assert captcha_key is not None, "Captcha key is missing in the response"
+    
+    # Print the captcha_key for debugging
+    print('Captcha_Key is:', captcha_key)
 
     # Step 2: Use the captcha_key to request the captcha image
     image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
@@ -58,16 +61,21 @@ def test_get_captcha_and_login(api_url):
     # Convert pre-processed image back to a PIL image for Tesseract
     processed_image = Image.fromarray(pre_processed_image)
 
-    # Use Tesseract to extract text with character whitelist to avoid unwanted characters like hyphens
-    custom_config = r'--psm 6 -c tessedit_char_whitelist=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Use Tesseract to extract text
+    # Use Tesseract to extract text with character whitelist to avoid unwanted characters
+    custom_config = r'--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+    raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()  # Raw OCR result
+    
+    # Print raw captcha response for debugging
+    print('Raw Captcha Response is :', raw_captcha_response)
 
-    # Check if the captcha_response is empty
-    if not captcha_response:
+    # Check if the raw_captcha_response is empty
+    if not raw_captcha_response:
         raise ValueError("Tesseract returned an empty response. Please check the captcha image and Tesseract installation.")
     
-    # Print for debugging
-    print('Captcha Key:', captcha_key)
-    print('Captcha Response:', captcha_response)
+    # If needed, convert to lowercase
+    captcha_response = raw_captcha_response.lower()  # Optional: Adjust if captcha expects lowercase text
+
+    # Print the final processed captcha response
+    print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
 
     # You can add additional checks to verify the correctness of the captcha_response
