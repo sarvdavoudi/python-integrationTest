@@ -6,12 +6,11 @@ import pytesseract
 from io import BytesIO
 import cv2
 import numpy as np
-
+import time
 
 @pytest.fixture(scope='module')
 def api_url():
     return os.getenv("API_URL")
-
 
 def pre_process_image(image_data):
     # Create a directory for saving images
@@ -49,7 +48,6 @@ def pre_process_image(image_data):
     # Return the processed image
     return morphed
 
-
 def test_get_captcha_and_login(api_url):
     # Specify the path to Tesseract executable
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update path if necessary
@@ -66,39 +64,68 @@ def test_get_captcha_and_login(api_url):
     assert captcha_key is not None, "Captcha key is missing in the response"
     print('Captcha_Key is:', captcha_key)
 
-    # Step 2: Use the captcha_key to request the captcha image
-    image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
-    assert image_response.status_code == 200, "Failed to retrieve captcha image"
-
-    # Step 3: Pre-process the image to improve OCR accuracy
-    image = Image.open(BytesIO(image_response.content))
-    pre_processed_image = pre_process_image(image)
-
-    # Convert pre-processed image back to a PIL image for Tesseract
-    processed_image = Image.fromarray(pre_processed_image)
-
-    # Step 4: Use Tesseract to extract text with character whitelist to avoid unwanted characters
-    custom_config = r'--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-    raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()
-    print('Raw Captcha Response is:', raw_captcha_response)
-
-    if not raw_captcha_response:
-        raise ValueError("Tesseract returned an empty response. Check the captcha image and Tesseract installation.")
-
-    # Convert to lowercase for processing if needed
-    captcha_response = raw_captcha_response.lower()
-    print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
-
     #####################################################################
     # Step 5: Perform login using username, password, captcha_key, and captcha_response
     login_url = f"{api_url}/user/login/"
-    payload = {
-        'username': 'admin',
-        'password': 'adminadmin',
-        'captcha_key': captcha_key,
-        'captcha_response': captcha_response
-    }
 
-    login_response = requests.post(login_url, json=payload)
-    assert login_response.status_code == 200, "Login failed. Check username, password, and captcha."
-    print('Login Response:', login_response.json())
+    # Initialize variables
+    max_retries = 5  # Max number of retries
+    retry_count = 0
+    successful_login = False
+
+    # Retry loop
+    while retry_count < max_retries and not successful_login:
+        # Step 2: Use the captcha_key to request the captcha image
+        image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
+        assert image_response.status_code == 200, "Failed to retrieve captcha image"
+
+        # Step 3: Pre-process the image to improve OCR accuracy
+        image = Image.open(BytesIO(image_response.content))
+        pre_processed_image = pre_process_image(image)
+
+        # Convert pre-processed image back to a PIL image for Tesseract
+        processed_image = Image.fromarray(pre_processed_image)
+
+        # Step 4: Use Tesseract to extract text with character whitelist to avoid unwanted characters
+        custom_config = r'--psm 6 -c tessedit_char_whitelist=abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        raw_captcha_response = pytesseract.image_to_string(processed_image, config=custom_config).strip()
+        print('Raw Captcha Response is:', raw_captcha_response)
+
+        if not raw_captcha_response:
+            raise ValueError("Tesseract returned an empty response. Check the captcha image and Tesseract installation.")
+
+        # Convert to lowercase for processing if needed
+        captcha_response = raw_captcha_response.lower()
+        print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
+
+        payload = {
+            'username': 'admin',
+            'password': 'adminadmin',
+            'captcha_key': captcha_key,
+            'captcha_response': captcha_response
+        }
+
+        login_response = requests.post(login_url, json=payload)
+
+        if login_response.status_code == 200:
+            print('Login Response:', login_response.json())
+            successful_login = True  # Exit the loop if login is successful
+        else:
+            print(f"Login attempt {retry_count + 1} failed. Requesting new captcha...")
+            # Request a new captcha if login fails
+            response = requests.get(f"{api_url}/user/captcha/")
+
+            # Ensure the response status is 200
+            assert response.status_code == 200, "Failed to retrieve new captcha"
+
+            # Parse the new captcha_key
+            response_data = response.json()
+            captcha_key = response_data.get('data', {}).get('captcha_key')
+            assert captcha_key is not None, "Captcha key is missing in the new response"
+            print('New Captcha_Key is:', captcha_key)
+
+            retry_count += 1
+            time.sleep(2)  # Sleep for a short duration before retrying
+
+    # Ensure login was successful after retries
+    assert successful_login, "Login failed after multiple attempts."
