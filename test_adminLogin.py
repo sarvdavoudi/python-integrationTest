@@ -14,43 +14,39 @@ def api_url():
 
 
 def pre_process_image(image_data):
-    # Create a directory for saving debug images
-    debug_dir = "images_login_captcha"
-    if not os.path.exists(debug_dir):
-        try:
-            os.makedirs(debug_dir)
-        except Exception as e:
-            raise OSError(f"Failed to create directory {debug_dir}: {e}")
-    assert os.path.exists(debug_dir), f"Directory {debug_dir} does not exist."
+    # Create a directory for saving images
+    image_dir = "images_login_captcha"
+    
+    # Create directory if it doesn't exist
+    os.makedirs(image_dir, exist_ok=True)
+    
+    # Save the received image in its original form
+    received_image_path = os.path.join(image_dir, "received_captcha.png")
+    image_data.save(received_image_path)  # Save the received image
+    print(f"Received image saved at: {received_image_path}")
 
-    # Convert the image to a NumPy array
+    # Convert the image to a NumPy array for processing
     image = np.array(image_data)
 
-    # Step 1: Convert to grayscale
+    # Convert to grayscale
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray_image_path = os.path.join(debug_dir, "gray_image.png")
-    cv2.imwrite(gray_image_path, gray)
-    print(f"Gray image saved at: {gray_image_path}")
-
-    # Step 2: Remove noise using GaussianBlur
+    
+    # Remove noise using GaussianBlur
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    blurred_image_path = os.path.join(debug_dir, "blurred_image.png")
-    cv2.imwrite(blurred_image_path, blurred)
-    print(f"Blurred image saved at: {blurred_image_path}")
-
-    # Step 3: Apply binary thresholding (Otsu's method)
+    
+    # Apply binary thresholding (Otsu's method)
     _, thresh = cv2.threshold(blurred, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresholded_image_path = os.path.join(debug_dir, "thresholded_image.png")
-    cv2.imwrite(thresholded_image_path, thresh)
-    print(f"Thresholded image saved at: {thresholded_image_path}")
-
-    # Step 4: Use morphological transformations to clean the text
+    
+    # Use morphological transformations to clean the text
     kernel = np.ones((3, 3), np.uint8)
     morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
-    processed_image_path = os.path.join(debug_dir, "processed_captcha.png")
-    cv2.imwrite(processed_image_path, morphed)
+    
+    # Save the final processed image
+    processed_image_path = os.path.join(image_dir, "final_processed_captcha.png")
+    cv2.imwrite(processed_image_path, morphed)  # Save the processed image
     print(f"Processed captcha image saved at: {processed_image_path}")
 
+    # Return the processed image
     return morphed
 
 
@@ -60,6 +56,8 @@ def test_get_captcha_and_login(api_url):
 
     # Step 1: Get the captcha_key from the /user/captcha/ endpoint
     response = requests.get(f"{api_url}/user/captcha/")
+
+    # Ensure the response status is 200
     assert response.status_code == 200, "Failed to retrieve captcha"
 
     # Parse the JSON response
@@ -91,7 +89,7 @@ def test_get_captcha_and_login(api_url):
     captcha_response = raw_captcha_response.lower()
     print('Processed Captcha Response from upperCase to lowerCase is:', captcha_response)
 
-    ####################################################################
+    #####################################################################
     # Step 5: Perform login using username, password, captcha_key, and captcha_response
     login_url = f"{api_url}/user/login/"
     payload = {
