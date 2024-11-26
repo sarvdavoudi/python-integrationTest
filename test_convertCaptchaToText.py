@@ -7,21 +7,21 @@ from io import BytesIO
 import cv2
 import numpy as np
 
+
 @pytest.fixture(scope='module')
 def api_url():
     return os.getenv("API_URL")
 
+
 def pre_process_image(image_data):
-    # Create directories for saving images
-    debug_dir = "debug_images"
-    processed_dir = "images_captcha_test"
+    # Create directory for saving images
+    image_dir = "images_captcha_test"
     
-    # Create directories if they don't exist
-    os.makedirs(debug_dir, exist_ok=True)
-    os.makedirs(processed_dir, exist_ok=True)
+    # Create directory if it doesn't exist
+    os.makedirs(image_dir, exist_ok=True)
     
     # Save the main image received from the server in its original PIL format
-    main_image_path = os.path.join(debug_dir, "received_captcha.png")
+    main_image_path = os.path.join(image_dir, "received_captcha.png")
     image_data.save(main_image_path)  # Save the original image as the main image
     
     # Convert the image to a NumPy array for processing
@@ -41,10 +41,12 @@ def pre_process_image(image_data):
     morphed = cv2.morphologyEx(thresh, cv2.MORPH_CLOSE, kernel)
     
     # Save the final processed image
-    processed_image_path = os.path.join(processed_dir, "final_processed_captcha.png")
+    processed_image_path = os.path.join(image_dir, "final_processed_captcha.png")
     cv2.imwrite(processed_image_path, morphed)
     
+    # Return the processed image
     return morphed
+
 
 def test_get_captcha_and_login(api_url):
     # Specify the path to Tesseract executable
