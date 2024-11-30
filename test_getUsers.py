@@ -166,6 +166,4 @@ def test_get_user_data(api_url):
     response_data = response.json()
     print("User Data:", response_data)
 
-    # Additional assertions
-    # assert 'data' in response_data, "User data is missing in the response"
-    # assert response_data['data'].get('username') is not None, "Username is missing in the response"
+    
