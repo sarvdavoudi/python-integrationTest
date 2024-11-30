@@ -72,7 +72,7 @@ def test_get_captcha_and_login(api_url):
     max_retries = 5  # Max number of retries
     retry_count = 0
     successful_login = False
-    token = None
+    token = None  # Variable to store the token
 
     # Retry loop
     while retry_count < max_retries and not successful_login:
@@ -108,12 +108,25 @@ def test_get_captcha_and_login(api_url):
 
         login_response = requests.post(login_url, json=payload)
 
+        # Add debug prints and checks here
+        print('Login Response:', login_response.json())  # Print the full login response for debugging
+
         if login_response.status_code == 200:
-            print('Login Response:', login_response.json())
             successful_login = True  # Exit the loop if login is successful
-            token = login_response.json().get('token')  # Extract token from response
+            token = login_response.json().get('token')  # Extract the token
+            
+            # Adjust the path based on the actual response structure
+            token = login_response.json().get('data', {}).get('token')  # Ensure you're getting the token from the correct path
+            
+            if token:
+                print('Received Token:', token)
+            else:
+                print("Token is missing in the login response.")
+                print('Full Response:', login_response.json())  # Print full response if token is missing
         else:
-            print(f"Login attempt {retry_count + 1} failed. Requesting new captcha...")
+            print(f"Login attempt {retry_count + 1} failed with status code {login_response.status_code}. Requesting new captcha...")
+            print('Response Content:', login_response.text)  # Print response content for further diagnosis
+            
             # Request a new captcha if login fails
             response = requests.get(f"{api_url}/user/captcha/")
 
@@ -132,30 +145,27 @@ def test_get_captcha_and_login(api_url):
     # Ensure login was successful after retries
     assert successful_login, "Login failed after multiple attempts."
 
-    #####################################################################
-    # Step 6: Create new user with the obtained token
-    if token:
-        create_user_url = f"{api_url}/user/create/"
-        create_user_payload = {
-            "username": "test2",
-            "email": "test2@gmail.com",
-            "password": "testtest2",
-            "password_again": "testtest2",
-            "role": "base"
-        }
-        headers = {
-            'Authorization': f'Bearer {token}'  # Send token in Authorization header
-        }
+    return token  # Return the token for further use
 
-    # Log the payload and headers before making the request
-    print("Creating user with payload:", create_user_payload)
-    print("Using Authorization header:", headers)
+####################################################################
+def test_get_user_data(api_url):
+    token = test_get_captcha_and_login(api_url)  # Call the login test to get the token
 
-    create_user_response = requests.post(create_user_url, json=create_user_payload, headers=headers)
+    # Define headers with the token
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
 
-    # Log the response status and body for troubleshooting
-    if create_user_response.status_code == 201:
-        print("User created successfully:", create_user_response.json())
-    else:
-        print(f"Failed to create user. Status Code: {create_user_response.status_code}")
-        print(f"Response Body: {create_user_response.text}")
+    # Send GET request with headers
+    response = requests.get(f"{api_url}/user/get/", headers=headers)
+
+    # Ensure the response status is 200
+    assert response.status_code == 200, "Failed to retrieve user data"
+
+    # Parse the response data
+    response_data = response.json()
+    print("User Data:", response_data)
+
+    # Additional assertions
+    # assert 'data' in response_data, "User data is missing in the response"
+    # assert response_data['data'].get('username') is not None, "Username is missing in the response"
