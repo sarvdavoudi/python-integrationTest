@@ -72,9 +72,9 @@ def test_get_captcha_and_login(api_url):
     max_retries = 5  # Max number of retries
     retry_count = 0
     successful_login = False
-    token = None  # Variable to store the token
+    token = None  
 
-    # Retry loop
+    # Retry loop until successful login with proccessed captcha
     while retry_count < max_retries and not successful_login:
         # Step 2: Use the captcha_key to request the captcha image
         image_response = requests.get(f"{api_url}/captcha/image/{captcha_key}/")
