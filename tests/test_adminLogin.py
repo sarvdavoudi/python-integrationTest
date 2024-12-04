@@ -1,7 +1,7 @@
 import pytest
 import os
 import requests
-from captcha_handler_decorator import captcha_handler_decorator
+from decorators.captcha_handler_decorator import captcha_handler_decorator
 
 
 @pytest.fixture(scope='module')

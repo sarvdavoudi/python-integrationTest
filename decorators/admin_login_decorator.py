@@ -1,5 +1,5 @@
 import requests
-from captcha_handler_decorator import captcha_handler_decorator
+from .captcha_handler_decorator import captcha_handler_decorator
 
 
 def admin_login_decorator(func):

@@ -1,7 +1,7 @@
 import pytest
 import requests
 import os
-from admin_login_decorator import admin_login_decorator
+from decorators.admin_login_decorator import admin_login_decorator
 
 
 @pytest.fixture(scope="module")
