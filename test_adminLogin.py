@@ -12,6 +12,7 @@ import time
 def api_url():
     return os.getenv("API_URL")
 
+
 def pre_process_image(image_data):
     # Create a directory for saving images
     image_dir = "images_login_captcha"
@@ -49,9 +50,6 @@ def pre_process_image(image_data):
     return morphed
 
 def test_get_captcha_and_login(api_url):
-    # Specify the path to Tesseract executable
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Update path if necessary
-
     # Step 1: Get the captcha_key from the /user/captcha/ endpoint
     response = requests.get(f"{api_url}/user/captcha/")
 
