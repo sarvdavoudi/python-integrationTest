@@ -1,9 +1,9 @@
 import requests
-from captcha_handler import captcha_handler
+from captcha_handler_decorator import captcha_handler_decorator
 
 
 def admin_login_decorator(func):
-    @captcha_handler
+    @captcha_handler_decorator
     def wrapper(api_url, captcha_key, captcha_response, *args, **kwargs):
         login_url = f"{api_url}/user/login/"
         payload = {
