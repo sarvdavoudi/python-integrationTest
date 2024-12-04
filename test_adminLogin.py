@@ -10,7 +10,6 @@ def api_url():
 
 
 @captcha_handler_decorator
-
 def test_login(api_url, captcha_key, captcha_response):
     login_url = f"{api_url}/user/login/"
     payload = {
