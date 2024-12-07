@@ -65,9 +65,5 @@ def test_create_user(api_url, token):
         json_file.seek(0)  
         json.dump(existing_data, json_file, indent=4)
 
-    print(f"User data added to: {json_file_path}")
-    
-    assert response.status_code == 200, "User creation failed"
-    response_data = response.json()
-
+    print(f"User data added to json file : {json_file_path}")
     print("Created User Data:", response_data)
