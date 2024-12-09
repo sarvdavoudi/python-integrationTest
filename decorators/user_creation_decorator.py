@@ -40,7 +40,7 @@ def user_creation_decorator(func):
         assert response.status_code == 200, "User creation failed"
         response_data = response.json()
 
-        user_data = {
+        user_creation_data = {
             "username": random_username,
             "email": random_email,
             "password": random_password,
@@ -51,14 +51,13 @@ def user_creation_decorator(func):
 
         with open(json_file_path, "r+") as json_file:
             existing_data = json.load(json_file)
-            existing_data.append(user_data)  
+            existing_data.append(user_creation_data)  
             json_file.seek(0)  
             json.dump(existing_data, json_file, indent=4)
 
         print(f"User data added to json file: {json_file_path}")
         print("Created User Data:", response_data)
 
-        # Pass the created user data to the decorated function
-        return func(api_url, token, user_data, *args, **kwargs)
+        return func(api_url, token, user_creation_data, *args, **kwargs)
 
     return wrapper

@@ -14,12 +14,9 @@ def get_user_decorator(func):
             "Authorization": f"Bearer {token}",
         }
         response = requests.get(f"{api_url}/user/get/", headers=headers)
-        
         assert response.status_code == 200, "Failed to retrieve user data"
-        response_data = response.json()
-        print("User Data:", response_data)
-
-        # Pass the response data to the decorated function
-        return func(api_url, token, response_data, *args, **kwargs)
+        get_user_data = response.json()
+        print("User Data:", get_user_data)
+        return func(api_url, token, get_user_data, *args, **kwargs)
 
     return wrapper
