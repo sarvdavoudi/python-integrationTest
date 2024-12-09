@@ -17,3 +17,8 @@ venv/
 
 # macOS
 .DS_Store
+
+#folders
+generated_users/
+images_captcha_test/
+images_login_captcha/
