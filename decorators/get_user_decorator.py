@@ -1,7 +1,7 @@
 import pytest
 import os
 import requests
-from decorators.admin_login_decorator import admin_login_decorator
+
 
 
 @pytest.fixture(scope="module")
@@ -9,7 +9,6 @@ def api_url():
     return os.getenv("API_URL")
 
 def get_user_decorator(func):
-    @admin_login_decorator
     def wrapper(api_url, token, *args, **kwargs):
         headers = {
             "Authorization": f"Bearer {token}",
