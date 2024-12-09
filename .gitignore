@@ -18,7 +18,8 @@ venv/
 # macOS
 .DS_Store
 
-#folders
+#my folders
 generated_users/
 images_captcha_test/
 images_login_captcha/
+decorators/__pycache__/
