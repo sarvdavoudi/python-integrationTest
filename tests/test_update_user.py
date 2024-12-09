@@ -11,12 +11,9 @@ def api_url():
     return os.getenv("API_URL")
 
 @admin_login_decorator
-
 @user_creation_decorator
-
 @get_user_decorator
-
-def test_update_user(api_url, token, response_data,user_data):
+def test_update_user(api_url, token, response_data, user_data):
     headers = {
         "Authorization": f"Bearer {token}",
     }
@@ -33,31 +30,28 @@ def test_update_user(api_url, token, response_data,user_data):
     if not users_data:
         pytest.fail("No users found in the JSON file.")
 
-    # Get the first user from the JSON data
-    first_json_user = users_data[0]
-
-    # Step 2: Compare the first JSON user with server users
+    # Step 2: Find the recently created user in server response
     if response_data.get("success") and response_data["data"]["Total"] > 0:
         server_users = response_data["data"]["Data"]
         
         for server_user in server_users:
-            # Compare the first JSON user with the server user by email
-            if server_user['email'] == first_json_user['email']:  # Match by email
+            # Compare server user with `user_data` by email (unique identifier)
+            if server_user['email'] == user_data['email']:  # Match by email
                 user_id = server_user['id']  # Get user_id from server response
-                print(f"Updating user: {first_json_user['username']} with ID: {user_id}")
+                print(f"Updating user: {user_data['username']} with ID: {user_id}")
 
                 # Check if the username already has an update suffix
-                if "_updated" not in first_json_user["username"]:
-                    updated_username = f"{first_json_user['username']}_updated"  # First update
+                if "_updated" not in user_data["username"]:
+                    updated_username = f"{user_data['username']}_updated"  # First update
                 else:
                     # Extract the existing version number if present, or start with 2
-                    if "_updated" in first_json_user["username"]:
-                        base_username = first_json_user["username"].split("_updated")[0]
-                        suffix = first_json_user["username"].split("_updated")[1]
+                    if "_updated" in user_data["username"]:
+                        base_username = user_data["username"].split("_updated")[0]
+                        suffix = user_data["username"].split("_updated")[1]
                         update_count = int(suffix) if suffix.isdigit() else 1
                         updated_username = f"{base_username}_updated{update_count + 1}"
                     else:
-                        updated_username = f"{first_json_user['username']}_updated2"  # Default second update
+                        updated_username = f"{user_data['username']}_updated2"  # Default second update
 
                 # Prepare updated data
                 update_data = {
@@ -72,7 +66,10 @@ def test_update_user(api_url, token, response_data,user_data):
                 print("Updated User Data from server:", updated_user_data)
 
                 # Update the JSON file with new information
-                first_json_user.update(update_data)
+                for json_user in users_data:
+                    if json_user["email"] == user_data["email"]:  # Match user in JSON by email
+                        json_user.update(update_data)
+                        break  # Exit loop after updating the user
                 break  # Exit the loop after updating to avoid multiple updates for the same user
 
     else:
