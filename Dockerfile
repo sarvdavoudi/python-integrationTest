@@ -1,20 +1,22 @@
-# Use the official Python image from the Docker Hub
-FROM python:3.12-slim
+FROM python:3.12
 
-# Set the working directory in the container
+# Set the working directory
 WORKDIR /app
 
-# Install system dependencies for OpenCV
-RUN apt-get update && apt-get install -y libgl1-mesa-glx && rm -rf /var/lib/apt/lists/*
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
-# Copy the requirements file to the container
+# Install system dependencies for OpenCV and other required libraries
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements file
 COPY requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the entire project to the container
+# Copy the rest of your application code
 COPY . .
 
-# Run tests when the container starts
+# Command to run tests
 CMD ["pytest"]
