@@ -6,7 +6,7 @@ coverage.xml
 # Python
 *.pyc
 *.pyo
-__pycache__/
+*__pycache__*
 
 # Virtual environment
 venv/
@@ -15,8 +15,6 @@ venv/
 .vscode/
 .idea/
 
-# macOS
-.DS_Store
 
 #my folders
 generated_users/
