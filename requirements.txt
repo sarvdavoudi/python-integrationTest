@@ -10,3 +10,5 @@ python-dotenv==1.0.1
 requests==2.32.3
 urllib3==2.2.3
 Pillow==11.0.0
+numpy
+pytesseract==0.3.13
