@@ -12,3 +12,5 @@ urllib3==2.2.3
 Pillow==11.0.0
 numpy
 pytesseract==0.3.13
+opencv-python
+
