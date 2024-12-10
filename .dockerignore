@@ -1,0 +1,25 @@
+# pytest
+.pytest_cache/
+htmlcov/
+coverage.xml
+
+# Python
+*.pyc
+*.pyo
+__pycache__/
+
+# Virtual environment
+venv/
+
+# IDEs
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+#my folders
+generated_users/
+images_captcha_test/
+images_login_captcha/
+decorators/__pycache__/
