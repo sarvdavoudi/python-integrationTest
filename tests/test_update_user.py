@@ -17,23 +17,18 @@ def test_update_user(api_url, token, get_user_data, user_creation_data):
     headers = {
         "Authorization": f"Bearer {token}",
     }
-
     # Step 1: Load existing users from the JSON file
     json_file_path = Path("generated_users/users.json")
     if not json_file_path.exists():
         pytest.fail("Users file not found. Please create users first.")
-
     with open(json_file_path, "r") as json_file:
         users_data = json.load(json_file)
-
     # Check if there are any users in the JSON file
     if not users_data:
         pytest.fail("No users found in the JSON file.")
-
     # Step 2: Find the recently created user in server response
     if get_user_data.get("success") and get_user_data["data"]["Total"] > 0:
         server_users = get_user_data["data"]["Data"]
-        
         for server_user in server_users:
             # Compare server user with `user_creation_data` by email (unique identifier)
             if server_user['email'] == user_creation_data['email']:  # Match by email

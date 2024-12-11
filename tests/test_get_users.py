@@ -11,7 +11,7 @@ def api_url():
 
 @admin_login_decorator
 
-def test_getUsers(api_url, token):
+def test_get_Users(api_url, token):
     headers = {
         "Authorization": f"Bearer {token}",
     }
