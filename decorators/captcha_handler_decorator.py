@@ -37,7 +37,7 @@ def captcha_handler_decorator(func):
         assert captcha_key is not None, "Captcha key is missing in the response"
 
         # Attempt to login with the captcha until successful
-        max_retries = 5
+        max_retries = 20
         retry_count = 0
         successful_login = False
 
