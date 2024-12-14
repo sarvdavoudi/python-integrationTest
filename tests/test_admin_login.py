@@ -10,8 +10,7 @@ def api_url():
 
 
 @captcha_handler_decorator
-def test_login(api_url, captcha_key, captcha_response):
-    login_url = f"{api_url}/user/login/"
+def test_admin_login(api_url, captcha_key, captcha_response):
     payload = {
         'username': 'admin',
         'password': 'adminadmin',
@@ -19,6 +18,6 @@ def test_login(api_url, captcha_key, captcha_response):
         'captcha_response': captcha_response,
     }
 
-    response = requests.post(login_url, json=payload)
+    response = requests.post(f"{api_url}/user/login/", json=payload)
     assert response.status_code == 200, "Login failed"
     print('Login Response:', response.json())
