@@ -21,4 +21,3 @@ def test_admin_login(api_url, captcha_key, captcha_response):
     response = requests.post(f"{api_url}/user/login/", json=payload)
     assert response.status_code == 200, "Login failed"
     print('Login Response:', response.json())
-# just for test
