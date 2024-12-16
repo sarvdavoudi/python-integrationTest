@@ -31,9 +31,7 @@ def test_login_user(api_url, captcha_key, captcha_response):
         """Handles the login process."""
         response = requests.post(f"{api_url}/user/login/", json=payload)
         if response.status_code != 200:
-            print(
-                "Login failed:", response.status_code, response.json()
-            )  # Debugging output
+            print("Login failed:", response.status_code, response.json())  # Debugging output
         assert response.status_code == 200, "Login failed"
         print("Login successful:", response.json())
         return response.json()  # Return the response JSON to extract the token
@@ -71,29 +69,23 @@ def test_login_user(api_url, captcha_key, captcha_response):
 
     # Extract security questions from the response
     response_data = response.json()
-    questions = response_data.get("data", [])
+    questions = response_data.get("data", {})
 
     # Debugging output to inspect the response structure
     print("Security questions response data:", response_data)
 
-    # Check if questions list is empty
-    if not isinstance(questions, list) or not questions:
-        print("No security questions found or questions is not a list.")
+    # Check if questions are structured as expected
+    if not isinstance(questions, dict) or not questions:
+        print("No security questions found or questions is not a dictionary.")
         return  # Exit if no questions are found
 
     # Prepare the answers for the security questions
     questions_and_answers = []
-    for question in questions:
-        # Ensure the question is structured as expected
-        if isinstance(question, dict) and "question" in question:
-            questions_and_answers.append(
-                {
-                    "question": question["question"],
-                    "answer": "x1",  # Replace with the actual answer
-                }
-            )
-        else:
-            print("Unexpected question format:", question)
+    for question_key, question_value in questions.items():
+        questions_and_answers.append({
+            "question": question_value,
+            "answer": "x1"  # Replace with the actual answer
+        })
 
     # Create the payload for the security questions
     security_payload = {
@@ -102,9 +94,7 @@ def test_login_user(api_url, captcha_key, captcha_response):
     }
 
     # Send the POST request to answer the security questions with headers
-    security_response = requests.post(
-        f"{api_url}/user/security_questions/", json=security_payload, headers=headers
-    )
+    security_response = requests.post(f"{api_url}/user/security_questions/", json=security_payload, headers=headers)
 
     # Check the response
     assert security_response.status_code == 200, "Failed to answer security questions"
