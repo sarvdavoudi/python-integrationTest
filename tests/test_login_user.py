@@ -23,9 +23,9 @@ def read_last_user_from_json(file_name="users.json"):
 def api_url():
     return os.getenv("API_URL")
 
+
 @admin_login_decorator
 @user_creation_decorator
-
 @captcha_handler_decorator
 def test_login_user(api_url, captcha_key, captcha_response):
     """Test user login with the last record from the JSON file."""
@@ -34,10 +34,10 @@ def test_login_user(api_url, captcha_key, captcha_response):
         """Handles the login process."""
         response = requests.post(f"{api_url}/user/login/", json=payload)
         if response.status_code != 200:
-            print("Login failed:", response.status_code, response.json())  
+            print("Login failed:", response.status_code, response.json())
         assert response.status_code == 200, "Login failed"
         print("Login successful:", response.json())
-        return response.json() 
+        return response.json()
 
     # Read the last user data from the JSON file
     user_data = read_last_user_from_json()
@@ -85,10 +85,12 @@ def test_login_user(api_url, captcha_key, captcha_response):
     # Prepare the answers for the security questions
     questions_and_answers = []
     for question_key, question_value in questions.items():
-        questions_and_answers.append({
-            "question": question_value,
-            "answer": "x1"  # Replace with the actual answer
-        })
+        questions_and_answers.append(
+            {
+                "question": question_value,
+                "answer": "x1",  # Replace with the actual answer
+            }
+        )
 
     # Create the payload for the security questions
     security_payload = {
@@ -97,7 +99,9 @@ def test_login_user(api_url, captcha_key, captcha_response):
     }
 
     # Send the POST request to answer the security questions with headers
-    security_response = requests.post(f"{api_url}/user/security_questions/", json=security_payload, headers=headers)
+    security_response = requests.post(
+        f"{api_url}/user/security_questions/", json=security_payload, headers=headers
+    )
 
     # Check the response
     assert security_response.status_code == 200, "Failed to answer security questions"
