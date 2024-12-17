@@ -27,7 +27,7 @@ def pre_process_image(image_data):
     return morphed
 
 def captcha_handler_decorator(func):
-    def wrapper(api_url):
+    def wrapper(api_url,*args, **kwargs):
         # Step 1: Get the captcha_key from the /user/captcha/ endpoint
         response = requests.get(f"{api_url}/user/captcha/")
         assert response.status_code == 200, "Failed to retrieve captcha"

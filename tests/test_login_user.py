@@ -4,6 +4,7 @@ import os
 import json
 from pathlib import Path
 from decorators.admin_login_decorator import admin_login_decorator
+from decorators.user_creation_decorator import user_creation_decorator
 from decorators.captcha_handler_decorator import captcha_handler_decorator
 
 
@@ -22,6 +23,8 @@ def read_last_user_from_json(file_name="users.json"):
 def api_url():
     return os.getenv("API_URL")
 
+@admin_login_decorator
+@user_creation_decorator
 
 @captcha_handler_decorator
 def test_login_user(api_url, captcha_key, captcha_response):
@@ -31,10 +34,10 @@ def test_login_user(api_url, captcha_key, captcha_response):
         """Handles the login process."""
         response = requests.post(f"{api_url}/user/login/", json=payload)
         if response.status_code != 200:
-            print("Login failed:", response.status_code, response.json())  # Debugging output
+            print("Login failed:", response.status_code, response.json())  
         assert response.status_code == 200, "Login failed"
         print("Login successful:", response.json())
-        return response.json()  # Return the response JSON to extract the token
+        return response.json() 
 
     # Read the last user data from the JSON file
     user_data = read_last_user_from_json()
